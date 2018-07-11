@@ -136,6 +136,31 @@ RUN if [ ${INSTALL_XDEBUG} = false -a ${INSTALL_BLACKFIRE} = true ]; then \
 ;fi
 
 ###########################################################################
+# PHP V8JS:
+###########################################################################
+
+ARG INSTALL_V8JS=false
+
+RUN if [ INSTALL_V8JS ]; then \
+    # Install the php V8JS extension
+    apt-get update -yqq \
+    && apt-get install -y gpg git patchelf \
+    && echo "deb http://ppa.launchpad.net/pinepain/libv8/ubuntu xenial main" >> /etc/apt/sources.list \
+    && apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 40ECBCF960C60AA4 \
+    && apt-get update -yqq \
+    && apt-get install -y libv8-6.5 libv8-6.5-dev \
+    && for A in /opt/libv8-6.5/lib/*.so; do patchelf --set-rpath '$ORIGIN' $A; done \
+    && cd /tmp \
+    && git clone https://github.com/phpv8/v8js.git \
+    && cd v8js \
+    && phpize \
+    && ./configure --with-v8js=/opt/libv8-6.5 LDFLAGS="-lstdc++" \
+    && make \
+    && make install \
+    && echo "extension=v8js.so\n" > $PHP_INI_DIR/conf.d/v8js.ini \
+;fi
+
+###########################################################################
 # PHP REDIS EXTENSION
 ###########################################################################
 
